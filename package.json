@@ -1,0 +1,33 @@
+{
+  "name": "nftr-transaction-processor",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start:dev": "nodemon",
+    "start": "ts-node ./src/server.ts",
+    "build": "tsc --build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trascaandrei/nftr-transaction-processor.git"
+  },
+  "author": "Adrian Stefan",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/trascaandrei/nftr-transaction-processor/issues"
+  },
+  "homepage": "https://github.com/trascaandrei/nftr-transaction-processor#readme",
+  "devDependencies": {
+    "@types/amqplib": "^0.10.1",
+    "@types/node": "^18.11.18",
+    "nodemon": "^2.0.20",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.9.4"
+  },
+  "dependencies": {
+    "amqplib": "^0.10.3",
+    "dotenv": "^16.0.3"
+  }
+}
