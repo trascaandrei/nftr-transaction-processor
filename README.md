@@ -9,6 +9,9 @@ AMQP_PASSWORD=guest
 AMQP_QUEUE_NAME=test
 AMQP_EXCHANGES=["all_events"]
 EVERY_N_MINUTES=1
+ADDRESS="<base64 string>"
+NFTR_HOST=http://localhost:5005
+LIST_NFT_URI=/api/v1/marketplace/nft/
 ```
 
 ## Run the processor
