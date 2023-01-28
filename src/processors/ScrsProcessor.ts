@@ -1,6 +1,6 @@
 import { ListArgsBuilder } from "../builders/ListArgsBuilder";
 import { Config } from "../config/config";
-import { ListArgs, ScrsBlock, SmartContractResult } from "../types";
+import { ListArgs, ListNftApiResponse, ScrsBlock, SmartContractResult } from "../types";
 import { NftOperation } from "../utils/NftOperation";
 import { OperationResult } from "../utils/OperationResult";
 import { Utility } from "../utils/Utility";
@@ -44,6 +44,8 @@ export class ScrsProcessor implements DataProcessor<ScrsBlock, Promise<void>> {
     }
 
     private async _processListTransactions(transactions: Map<string, SmartContractResult[]>): Promise<void> {
+        const promises: Promise<ListNftApiResponse>[] = [];
+
         for (const [originalTxHash, scResults] of transactions) {
             const { listOpArgs, opResultArgs, ownerAddress } = this._getListTransactionDetails(scResults);
 
@@ -75,7 +77,7 @@ export class ScrsProcessor implements DataProcessor<ScrsBlock, Promise<void>> {
                     const listArgs: ListArgs = listArgsBuilder.addTransactionId(tokens[2]).build();
                     const url: string = `${Config.NFTR_HOST}${Config.LIST_NFT_URI}`;
 
-                    await this._listNftApiCaller.call(url, { body: { ...listArgs } });
+                    promises.push(this._listNftApiCaller.call(url, { body: { ...listArgs } }));
                 } else {
                     console.warn(`Not enough arguments for list op result. Expected 3, got ${tokens}`);
                 }
@@ -84,6 +86,14 @@ export class ScrsProcessor implements DataProcessor<ScrsBlock, Promise<void>> {
             }
             
         }
+
+        const results: PromiseSettledResult<ListNftApiResponse>[] = await Promise.allSettled(promises);
+
+        results.forEach((result: PromiseSettledResult<ListNftApiResponse>) => {
+            if (result.status === "rejected") {
+                console.error(result.reason);
+            }
+        });
     }
 
     private _getListTransactionDetails(scResults: SmartContractResult[]): Record<string, string> {
