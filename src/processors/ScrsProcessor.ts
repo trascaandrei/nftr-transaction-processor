@@ -104,7 +104,7 @@ export class ScrsProcessor implements DataProcessor<ScrsBlock, Promise<void>> {
 
         results.forEach((result: PromiseSettledResult<ListNftApiResponse>) => {
             if (result.status === "rejected") {
-                console.error(result.reason);
+                console.error(JSON.stringify(result.reason));
             }
         });
     }
@@ -162,7 +162,7 @@ export class ScrsProcessor implements DataProcessor<ScrsBlock, Promise<void>> {
 
         results.forEach((result: PromiseSettledResult<BuyAndWithdrawResponse>) => {
             if (result.status === "rejected") {
-                console.error(result.reason);
+                console.error(JSON.stringify(result.reason));
             }
         });
     }
