@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+  nftr-transaction-processor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./logs:/usr/app/nftr_transaction_processor/logs
+    network_mode: "host"
+    command: sh -c "node dist/server.js > ./logs/logs.log 2>&1"
