@@ -1,17 +1,23 @@
 import { ListArgsBuilder } from "../builders/ListArgsBuilder";
 import { Config } from "../config/config";
-import { ListArgs, ListNftApiResponse, ScrsBlock, SmartContractResult } from "../types";
+import { BuyAndWithdrawResponse, ListArgs, ListNftApiResponse, ScrsBlock, SmartContractResult } from "../types";
 import { NftOperation } from "../utils/NftOperation";
 import { OperationResult } from "../utils/OperationResult";
 import { Utility } from "../utils/Utility";
+import { BuyNftApiCaller } from "./BuyNftApiCaller";
 import { DataProcessor } from "./DataProcessor";
 import { ListNftApiCaller } from "./ListNftApiCaller";
+import { WithdrawNftApiCaller } from "./WithdrawNftApiCaller";
 
 export class ScrsProcessor implements DataProcessor<ScrsBlock, Promise<void>> {
     private _listNftApiCaller: ListNftApiCaller;
+    private _buyNftApiCaller: BuyNftApiCaller;
+    private _withdrawNftApiCaller: WithdrawNftApiCaller;
     
     constructor() {
         this._listNftApiCaller = new ListNftApiCaller();
+        this._buyNftApiCaller = new BuyNftApiCaller();
+        this._withdrawNftApiCaller = new WithdrawNftApiCaller();
     }
 
     public async process(data: ScrsBlock): Promise<void> {
@@ -40,7 +46,12 @@ export class ScrsProcessor implements DataProcessor<ScrsBlock, Promise<void>> {
             }
         }
 
-        await this._processListTransactions(transactions);
+        const promises: Promise<void>[] = [
+            this._processListTransactions(transactions),
+            this._processBuyAndWithdrawTransactions(transactions)
+        ]
+
+        await Promise.allSettled(promises);
     }
 
     private async _processListTransactions(transactions: Map<string, SmartContractResult[]>): Promise<void> {
@@ -50,8 +61,10 @@ export class ScrsProcessor implements DataProcessor<ScrsBlock, Promise<void>> {
             const { listOpArgs, opResultArgs, ownerAddress } = this._getListTransactionDetails(scResults);
 
             if (!listOpArgs || !opResultArgs) {
-                // TODO: should create an analytic class responsible for recording how many transactions failed
-                console.warn(`It is not a list transaction: ${originalTxHash} -> ${JSON.stringify(scResults)}: `, { listOpArgs, opResultArgs, ownerAddress });
+                if (listOpArgs) {
+                    console.warn(`List transaction failed: ${originalTxHash} -> ${JSON.stringify(scResults)}: `, { listOpArgs, opResultArgs, ownerAddress });
+                }
+
                 continue;
             }
 
@@ -91,7 +104,7 @@ export class ScrsProcessor implements DataProcessor<ScrsBlock, Promise<void>> {
 
         results.forEach((result: PromiseSettledResult<ListNftApiResponse>) => {
             if (result.status === "rejected") {
-                console.error(result.reason);
+                console.error(JSON.stringify(result.reason));
             }
         });
     }
@@ -114,6 +127,67 @@ export class ScrsProcessor implements DataProcessor<ScrsBlock, Promise<void>> {
             }
 
             if (result.listOpArgs && result.opResultArgs) {
+                return result;
+            }
+        }
+
+        return result;
+    }
+    
+    private async _processBuyAndWithdrawTransactions(transactions: Map<string, SmartContractResult[]>): Promise<void> {
+        const promises: Promise<BuyAndWithdrawResponse>[] = [];
+
+        for (const [originalTxHash, scResults] of transactions) {
+            const { opType, transactionId, address } = this._getBuyOrWithdrawTransactionDetails(scResults);
+
+            if (!opType || !transactionId) {
+                if (opType) {
+                    const msg: string = `${opType === NftOperation.BUY ? 'But' : 'Withdraw'} transaction failed`;
+                    console.warn(`${msg}: ${originalTxHash} -> ${JSON.stringify(scResults)}: `, { opType, transactionId, address });
+                }
+
+                continue;
+            }
+
+            if (opType === NftOperation.BUY) {
+                const url: string = `${Config.NFTR_HOST}${Config.BUY_NFT_URI}/${transactionId}`;
+                promises.push(this._buyNftApiCaller.call(url, { body: { ownerAddress: address }}));
+            } else if (opType === NftOperation.WITHDRAW) {
+                const url: string = `${Config.NFTR_HOST}${Config.WITHDRAW_NFT_URI}/${transactionId}`;
+                promises.push(this._withdrawNftApiCaller.call(url));
+            }
+        }
+
+        const results: PromiseSettledResult<BuyAndWithdrawResponse>[] = await Promise.allSettled(promises);
+
+        results.forEach((result: PromiseSettledResult<BuyAndWithdrawResponse>) => {
+            if (result.status === "rejected") {
+                console.error(JSON.stringify(result.reason));
+            }
+        });
+    }
+
+    private _getBuyOrWithdrawTransactionDetails(scResults: SmartContractResult[]): Record<string, string> {
+        const result: Record<string, string> = {
+            opType: undefined, /* buy or withdraw operation */
+            transactionId: undefined, /* transaction id */
+            address: undefined /* the address of the new owner */
+        };
+
+        for (const scResult of scResults) {
+            const data: string = Utility.convertBase64ToString(scResult.data);
+            const tokens: string[] = data.split("@");
+
+            if (tokens.length >= 3 && tokens[tokens.length - 1] === NftOperation.BUY) {
+                result.opType = NftOperation.BUY;
+                result.address = Utility.convertHexToBech32Address(tokens[tokens.length - 2]);
+            } else if (tokens.length >= 3 && tokens[tokens.length - 1] === NftOperation.WITHDRAW) {
+                result.opType = NftOperation.WITHDRAW;
+            } else if (tokens.length === 3 && `@${tokens[1]}` === OperationResult.OK) {
+                result.transactionId = tokens[2];
+            }
+
+            if (result.opType && result.transactionId) {
                 return result;
             }
         }

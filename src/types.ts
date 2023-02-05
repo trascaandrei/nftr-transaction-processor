@@ -57,8 +57,14 @@ export interface RequestData {
     body?: Record<string, unknown>;
 };
 
-export interface ErrorResponse {
+interface MsgResponse {
     message: string;
 };
 
+export interface ErrorResponse extends MsgResponse {};
+
+export interface SuccessResponse extends MsgResponse {};
+
 export type ListNftApiResponse = ErrorResponse | { nftId: string; };
+
+export type BuyAndWithdrawResponse = SuccessResponse | ErrorResponse;

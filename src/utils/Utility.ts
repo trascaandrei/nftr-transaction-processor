@@ -24,6 +24,10 @@ export class Utility {
     public static convertBase64ToBech32Address(rawStr: string): string {
         const hex: string = Utility._convertEncodedStrToTargetEncoding(rawStr, "base64", "hex");
 
+        return Utility.convertHexToBech32Address(hex);
+    }
+
+    public static convertHexToBech32Address(hex: string): string {
         return Address.fromHex(hex).bech32();
     }
 

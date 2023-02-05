@@ -12,4 +12,6 @@ export class Config {
     public static ADDRESS: string = process.env.ADDRESS;
     public static NFTR_HOST: string = process.env.NFTR_HOST;
     public static LIST_NFT_URI: string = process.env.LIST_NFT_URI;
+    public static BUY_NFT_URI: string = process.env.BUY_NFT_URI;
+    public static WITHDRAW_NFT_URI: string = process.env.WITHDRAW_NFT_URI;
 };

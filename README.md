@@ -12,6 +12,8 @@ EVERY_N_MINUTES=1
 ADDRESS="<base64 string>"
 NFTR_HOST=http://localhost:5005
 LIST_NFT_URI=/api/v1/marketplace/nft/
+BUY_NFT_URI=/api/v1/marketplace/nft/
+WITHDRAW_NFT_URI=/api/v1/marketplace/nft/
 ```
 
 ## Run the processor
