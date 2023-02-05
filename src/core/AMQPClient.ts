@@ -9,7 +9,7 @@ export class AMQPClient {
         this._initialize = this._initConnection(options);
     }
 
-    public async init(queue: string, exchanges: string[], consumer: (msg: unknown) => void): Promise<void> {
+    public async init(queue: string, exchanges: string[], consumer: (msg: unknown) => unknown): Promise<void> {
         await this._initialize;
         await this._channel.assertQueue(queue);
 
