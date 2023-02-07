@@ -58,7 +58,7 @@ export class ScrsProcessor implements DataProcessor<ScrsBlock, Promise<void>> {
         const results: PromiseSettledResult<void>[] = await Promise.allSettled(promises);
         results.forEach((result: PromiseSettledResult<void>) => {
             if (result.status === "rejected") {
-                console.error(result.reason);
+                console.error(JSON.stringify(result.reason));
             }
         });
     }
