@@ -46,12 +46,21 @@ export class ScrsProcessor implements DataProcessor<ScrsBlock, Promise<void>> {
             }
         }
 
+        if (!transactions.size) {
+            return;
+        }
+
         const promises: Promise<void>[] = [
             this._processListTransactions(transactions),
             this._processBuyAndWithdrawTransactions(transactions)
         ]
 
-        await Promise.allSettled(promises);
+        const results: PromiseSettledResult<void>[] = await Promise.allSettled(promises);
+        results.forEach((result: PromiseSettledResult<void>) => {
+            if (result.status === "rejected") {
+                console.error(result.reason);
+            }
+        });
     }
 
     private async _processListTransactions(transactions: Map<string, SmartContractResult[]>): Promise<void> {
@@ -100,6 +109,10 @@ export class ScrsProcessor implements DataProcessor<ScrsBlock, Promise<void>> {
             
         }
 
+        if (!promises.length) {
+            return;
+        }
+
         const results: PromiseSettledResult<ListNftApiResponse>[] = await Promise.allSettled(promises);
 
         results.forEach((result: PromiseSettledResult<ListNftApiResponse>) => {
@@ -142,7 +155,7 @@ export class ScrsProcessor implements DataProcessor<ScrsBlock, Promise<void>> {
 
             if (!opType || !transactionId) {
                 if (opType) {
-                    const msg: string = `${opType === NftOperation.BUY ? 'But' : 'Withdraw'} transaction failed`;
+                    const msg: string = `${opType === NftOperation.BUY ? 'Buy' : 'Withdraw'} transaction failed`;
                     console.warn(`${msg}: ${originalTxHash} -> ${JSON.stringify(scResults)}: `, { opType, transactionId, address });
                 }
 
@@ -156,6 +169,10 @@ export class ScrsProcessor implements DataProcessor<ScrsBlock, Promise<void>> {
                 const url: string = `${Config.NFTR_HOST}${Config.WITHDRAW_NFT_URI}/${transactionId}`;
                 promises.push(this._withdrawNftApiCaller.call(url));
             }
+        }
+
+        if (!promises.length) {
+            return;
         }
 
         const results: PromiseSettledResult<BuyAndWithdrawResponse>[] = await Promise.allSettled(promises);
@@ -180,7 +197,7 @@ export class ScrsProcessor implements DataProcessor<ScrsBlock, Promise<void>> {
 
             if (tokens.length >= 3 && tokens[tokens.length - 1] === NftOperation.BUY) {
                 result.opType = NftOperation.BUY;
-                result.address = Utility.convertHexToBech32Address(tokens[tokens.length - 2]);
+                result.address = Utility.convertBase64ToBech32Address(scResult.receiver);
             } else if (tokens.length >= 3 && tokens[tokens.length - 1] === NftOperation.WITHDRAW) {
                 result.opType = NftOperation.WITHDRAW;
             } else if (tokens.length === 3 && `@${tokens[1]}` === OperationResult.OK) {

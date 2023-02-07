@@ -19,7 +19,7 @@ export class Consumer {
 
     public async start(): Promise<void> {
         await this._client.init(this._amqpConfig.queue, this._amqpConfig.exchanges, this._consume.bind(this));
-        this._analytic.start();
+        // this._analytic.start();
     }
 
     public async stop(): Promise<void> {
