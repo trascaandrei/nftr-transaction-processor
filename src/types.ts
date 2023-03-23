@@ -43,6 +43,18 @@ export interface ScrsBlock extends Block {
     scrs: Record<string, SmartContractResult>;
 };
 
+export type TransactionDetails = Omit<SmartContractResult, "callType" | "originalTxHash" | "prevTxHash"> & {
+    chainID: string;
+    version: number;
+    signature: string;
+};
+
+export interface TxsBlock extends Block {
+    txs: Record<string, TransactionDetails>;
+};
+
+export type Message = ScrsBlock | TxsBlock;
+
 export interface ListArgs {
     collectionTicker: string;
     nonce: string;
@@ -68,3 +80,5 @@ export interface SuccessResponse extends MsgResponse {};
 export type ListNftApiResponse = ErrorResponse | { nftId: string; };
 
 export type BuyAndWithdrawResponse = SuccessResponse | ErrorResponse;
+
+export type UpdatePriceResponse = SuccessResponse | ErrorResponse;

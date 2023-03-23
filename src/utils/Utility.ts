@@ -13,6 +13,10 @@ export class Utility {
         return Utility._convertEncodedStrToTargetEncoding(rawStr, "hex");
     }
 
+    public static convertHexToBase64(rawStr: string): string {
+        return Utility._convertEncodedStrToTargetEncoding(rawStr, "hex", "base64");
+    }
+
     public static convertHexToDecimal(rawStr: string): number {
         return parseInt(rawStr, 16);
     }
