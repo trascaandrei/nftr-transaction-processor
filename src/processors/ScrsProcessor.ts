@@ -99,7 +99,7 @@ export class ScrsProcessor implements DataProcessor<ScrsBlock, Promise<void>> {
                     const listArgs: ListArgs = listArgsBuilder.addTransactionId(tokens[2]).build();
                     const url: string = `${Config.NFTR_HOST}${Config.LIST_NFT_URI}`;
 
-                    promises.push(this._listNftApiCaller.call(url, { body: { ...listArgs } }));
+                    promises.push(this._listNftApiCaller.call(url, { body: { ...listArgs }, headers: { 'nftr-api-key': Config.NFTR_API_KEY } }));
                 } else {
                     console.warn(`Not enough arguments for list op result. Expected 3, got ${tokens}`);
                 }
@@ -163,11 +163,11 @@ export class ScrsProcessor implements DataProcessor<ScrsBlock, Promise<void>> {
             }
 
             if (opType === NftOperation.BUY) {
-                const url: string = `${Config.NFTR_HOST}${Config.BUY_NFT_URI}/${transactionId}`;
-                promises.push(this._buyNftApiCaller.call(url, { body: { ownerAddress: address }}));
+                const url: string = `${Config.NFTR_HOST}${Config.UPDATE_NFT_URI}/${transactionId}`;
+                promises.push(this._buyNftApiCaller.call(url, { body: { ownerAddress: address }, headers: { 'nftr-api-key': Config.NFTR_API_KEY } }));
             } else if (opType === NftOperation.WITHDRAW) {
                 const url: string = `${Config.NFTR_HOST}${Config.WITHDRAW_NFT_URI}/${transactionId}`;
-                promises.push(this._withdrawNftApiCaller.call(url));
+                promises.push(this._withdrawNftApiCaller.call(url, { headers: { 'nftr-api-key': Config.NFTR_API_KEY } }));
             }
         }
 
