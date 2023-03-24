@@ -40,7 +40,7 @@ export class TxsProcessor implements DataProcessor<Message, Promise<void>>, Clea
         const size: number = this._map.size;
 
         for (const [key, details] of this._map) {
-            if (details.state === OperationState.UNKNOWN && details.timestamp < Date.now() - 1) {
+            if (details.state === OperationState.UNKNOWN && details.timestamp < Date.now() - 3600 * 1000) {
                 this._map.delete(key);
                 console.log(`Deleted key ${key}.`);
                 ++removed;
